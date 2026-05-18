@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lesson 4 — Market Efficiency vs Market Failures</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    width: 100%;
+    background: #f5f1e8;
+    color: #1a1a1a;
+    font-family: 'Fraunces', Georgia, serif;
+    overflow-x: hidden;
+  }
+  body {
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(196, 87, 48, 0.08) 0%, transparent 40%),
+      radial-gradient(circle at 80% 90%, rgba(45, 90, 75, 0.07) 0%, transparent 40%);
+    min-height: 100vh;
+    padding: 24px 16px 60px;
+  }
+  /* Grain overlay */
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    pointer-events: none;
+    opacity: 0.4;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0.1, 0 0 0 0 0.1, 0 0 0 0 0.1, 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    z-index: 1;
+  }
+  .wrap { position: relative; z-index: 2; max-width: 720px; margin: 0 auto; }
+
+  header {
+    text-align: center;
+    padding: 8px 0 28px;
+    border-bottom: 1px solid rgba(26,26,26,0.15);
+    margin-bottom: 28px;
+  }
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: #c45730;
+    margin-bottom: 12px;
+  }
+  h1 {
+    font-size: 34px;
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    font-style: italic;
+  }
+  h1 em { color: #c45730; font-style: italic; }
+  .sub {
+    font-size: 14px;
+    color: #555;
+    margin-top: 10px;
+    font-style: italic;
+  }
+
+  .legend {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .chip {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 5px 10px;
+    border-radius: 100px;
+    border: 1px solid currentColor;
+  }
+  .chip.core { color: #1a1a1a; }
+  .chip.fail { color: #c45730; }
+  .chip.fix { color: #2d5a4b; }
+
+  /* Tree */
+  .node {
+    background: #fffdf7;
+    border: 1px solid rgba(26,26,26,0.18);
+    border-radius: 14px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    transition: border-color 0.3s ease, transform 0.2s ease;
+  }
+  .node:active { transform: scale(0.997); }
+  .node.open { border-color: rgba(26,26,26,0.4); box-shadow: 0 8px 30px -12px rgba(0,0,0,0.15); }
+
+  .node-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 18px;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+  }
+  .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #999;
+    letter-spacing: 0.1em;
+    flex-shrink: 0;
+    width: 32px;
+  }
+  .title {
+    font-size: 19px;
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    flex: 1;
+  }
+  .toggle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    color: #c45730;
+    font-weight: 600;
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
+  }
+  .node.open .toggle { transform: rotate(45deg); }
+
+  .body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+  }
+  .node.open .body { max-height: 2400px; }
+  .body-inner {
+    padding: 0 18px 22px 64px;
+    font-size: 15.5px;
+    line-height: 1.55;
+    color: #2a2a2a;
+  }
+  .body-inner p { margin-bottom: 12px; }
+  .body-inner strong { font-weight: 600; color: #1a1a1a; }
+  .body-inner em { color: #c45730; font-style: italic; font-weight: 600; }
+
+  .key-box {
+    background: #f5f1e8;
+    border-left: 3px solid #c45730;
+    padding: 12px 14px;
+    margin: 14px 0;
+    border-radius: 0 8px 8px 0;
+    font-size: 14.5px;
+  }
+  .key-box .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #c45730;
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  .formula {
+    font-family: 'JetBrains Mono', monospace;
+    background: #1a1a1a;
+    color: #f5f1e8;
+    padding: 10px 14px;
+    border-radius: 8px;
+    text-align: center;
+    margin: 12px 0;
+    font-size: 14px;
+    letter-spacing: 0.05em;
+  }
+
+  .sub-list {
+    list-style: none;
+    margin: 10px 0;
+  }
+  .sub-list li {
+    padding: 8px 0 8px 24px;
+    position: relative;
+    border-bottom: 1px dashed rgba(26,26,26,0.12);
+  }
+  .sub-list li:last-child { border-bottom: none; }
+  .sub-list li::before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    color: #c45730;
+    font-weight: 600;
+  }
+  .sub-list strong { display: block; margin-bottom: 2px; }
+
+  /* Type colors */
+  .node[data-type="fail"] .num,
+  .node[data-type="fail"] .toggle { color: #c45730; }
+  .node[data-type="fix"] .num,
+  .node[data-type="fix"] .toggle { color: #2d5a4b; }
+  .node[data-type="fix"] .body-inner em { color: #2d5a4b; }
+  .node[data-type="fix"] .key-box { border-left-color: #2d5a4b; }
+  .node[data-type="fix"] .key-box .label { color: #2d5a4b; }
+
+  footer {
+    text-align: center;
+    margin-top: 36px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(26,26,26,0.15);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #999;
+  }
+
+  .controls {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  .btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 9px 16px;
+    border-radius: 100px;
+    border: 1px solid #1a1a1a;
+    background: transparent;
+    color: #1a1a1a;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .btn:active { background: #1a1a1a; color: #f5f1e8; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Principles of Microeconomics · Lesson 4</div>
+    <h1>Market Efficiency<br/><em>vs</em> Market Failures</h1>
+    <div class="sub">Tap any branch to explore</div>
+  </header>
+
+  <div class="legend">
+    <span class="chip core">Core Concept</span>
+    <span class="chip fail">Failure</span>
+    <span class="chip fix">Fix / Response</span>
+  </div>
+
+  <div class="controls">
+    <button class="btn" id="expandAll">Expand all</button>
+    <button class="btn" id="collapseAll">Collapse all</button>
+  </div>
+
+  <!-- 01 -->
+  <div class="node" data-type="core">
+    <div class="node-head">
+      <span class="num">01</span>
+      <span class="title">Efficient Markets</span>
+      <span class="toggle">+</span>
+    </div>
+    <div class="body"><div class="body-inner">
+      <p>A market that produces the <strong>maximum output</strong> of desirable goods from given inputs, with maximum consumer and producer satisfaction.</p>
+      <ul class="sub-list">
+        <li><strong>Productive efficiency</strong>Max output, min resource input.</li>
+        <li><strong>Allocative efficiency</strong>Producing what consumers actually want.</li>
+        <li><strong>Adam Smith's "invisible hand"</strong>Many buyers + sellers, no price-setters, free entry/exit, full price/cost paid, price rations supply &amp; demand.</li>
+      </ul>
+      <div class="key-box">
+        <span class="label">Equilibrium</span>
+        Quantity supplied = quantity demanded. No surplus, no shortage.
+      </div>
+    </div></div>
+  </div>
+
+  <!-- 02 -->
+  <div class="node" data-type="core">
+    <div class="node-head">
+      <span class="num">02</span>
+      <span class="title">Pareto Optimality</span>
+      <span class="toggle">+</span>
+    </div>
+    <div class="body"><div class="body-inner">
+      <p>Vilfredo Pareto, Italian economist, early 1920s. A system is <em>optimal</em> when no reallocation can make one person better off without making another worse off.</p>
+      <p>Using the PPF (Computers vs Clothing): moving from point D to point B is a Pareto improvement — more of both goods, nobody loses. D → A or D → C makes one preference group worse off, so neither is a Pareto improvement.</p>
+      <div class="key-box">
+        <span class="label">The test</span>
+        Can we gain for one without loss to another? If yes, we're not yet optimal.
+      </div>
+    </div></div>
+  </div>
+
+  <!-- 03 -->
+  <div class="node" data-type="core">
+    <div class="node-head">
+      <span class="num">03</span>
+      <span class="title">Price vs Value</span>
+      <span class="toggle">+</span>
+    </div>
+    <div class="body"><div class="body-inner">
+      <p><strong>Value</strong> = what you're willing to pay (marginal benefit) or willing to forgo to produce. <strong>Price</strong> = what's actually charged.</p>
+      <p>In the $8.50 lunch example: at equilibrium, consumer value = price = producer value. Everyone's marginal benefit equals their marginal cost — that's efficiency.</p>
+      <div class="formula">MB = MC</div>
+      <p>If <em>MB &gt; MC</em>: produce more (under-production).<br/>If <em>MC &gt; MB</em>: produce less (over-production).</p>
+    </div></div>
+  </div>
+
+  <!-- 04 -->
+  <div class="node" data-type="core">
+    <div class="node-head">
+      <span class="num">04</span>
+      <span class="title">Consumer &amp; Producer Surplus</span>
+      <span class="toggle">+</span>
+    </div>
+    <div class="body"><div class="body-inner">
+      <p><strong>Consumer surplus</strong> = what consumers would have paid minus what they actually paid.</p>
+      <p><strong>Producer surplus</strong> = price received minus the minimum producers would have accepted.</p>
+      <div class="key-box">
+        <span class="label">Lunch example @ $8.50</span>
+        Consumer surplus: $1.00 (from $9.50 buyer) + $0.50 (from $9.00 buyer) = <strong>1.5</strong><br/>
+        Producer surplus: $1.00 + $0.50 = <strong>1.5</strong><br/>
+        Total surplus = <strong>3.0</strong> — maximum possible.
+      </div>
+    </div></div>
+  </div>
+
+  <!-- 05 -->
+  <div class="node" data-type="fail">
+    <div class="node-head">
+      <span class="num">05</span>
+      <span class="title">Deadweight Loss</span>
+      <span class="toggle">+</span>
+    </div>
+    <div class="body"><div class="body-inner">
+      <p>The lost surplus when a market isn't at equilibrium. Any output level other than where MB = MC creates deadweight inefficiency.</p>
+      <ul class="sub-list">
+        <li><strong>Under-production (MB &gt; MC)</strong>Price too low (e.g., $8.00 lunch). Could gain surplus by producing more.</li>
+        <li><strong>Over-production (MC &gt; MB)</strong>Price too high (e.g., $9.00 lunch). Could gain surplus by producing less.</li>
+      </ul>
+      <p>Government <em>price ceilings</em> (rent control) cause under-production. <em>Price floors</em> (minimum wage) cause over-production.</p>
+    </div></div>
+  </div>
+
+  <!-- 06 -->
+  <div class="node" data-type="fail">
+    <div class="node-head">
+      <span class="num">06</span>
+      <span class="title">Failure: Monopoly Power</span>
+      <span class="toggle">+</span>
+    </div>
+    <div class="body"><div class="body-inner">
+      <p>Little or no competition → higher prices, lower output, MB &gt; MC, deadweight loss for society.</p>
+      <ul class="sub-list">
+        <li><strong>Natural monopoly</strong>Economies of scale make one producer cheapest (e.g., city bus). Government grants sole-supplier status.</li>
+        <li><strong>Patents &amp; copyrights</strong>Temporary monopoly to reward innovation, then competition restored.</li>
+      </ul>
+    </div></div>
+  </div>
+
+  <!-- 07 -->
+  <div class="node" data-type="fail">
+    <div class="node-head">
+      <span class="num">07</span>
+      <span class="title">Failure: Externalities</span>
+      <span class="toggle">+</span>
+    </div>
+    <div class="body"><div class="body-inner">
+      <p>Third parties — not part of a transaction — are affected. Price doesn't reflect true social cost or benefit.</p>
+      <ul class="sub-list">
+        <li><strong>Merit goods (positive)</strong>Spillover benefits. Example: public education → employed, productive, less reliant on welfare.</li>
+        <li><strong>Demerit goods (negative)</strong>Spillover costs. Example: car pollution affects people who didn't buy the car.</li>
+      </ul>
+    </div></div>
+  </div>
+
+  <!-- 08 -->
+  <div class="node" data-type="fail">
+    <div class="node-head">
+      <span class="num">08</span>
+      <span class="title">Failure: Moral Hazard</span>
+      <span class="toggle">+</span>
+    </div>
+    <div class="body"><div class="body-inner">
+      <p>One party takes a risk, but someone else bears the cost.</p>
+      <ul class="sub-list">
+        <li><strong>Health</strong>Smoking/drinking — medical costs pushed to insurance pools and public hospitals.</li>
+        <li><strong>2007 subprime crisis</strong>Bankers made risky loans for short-term profit; government absorbed losses to prevent macro collapse.</li>
+      </ul>
+    </div></div>
+  </div>
+
+  <!-- 09 -->
+  <div class="node" data-type="fail">
+    <div class="node-head">
+      <span class="num">09</span>
+      <span class="title">Failure: Public Goods</span>
+      <span class="toggle">+</span>
+    </div>
+    <div class="body"><div class="body-inner">
+      <p>Goods with two unusual traits:</p>
+      <ul class="sub-list">
+        <li><strong>Non-excludable</strong>Can't prevent people from using it.</li>
+        <li><strong>Non-rival</strong>One person's use doesn't reduce another's.</li>
+      </ul>
+      <p>Example: a lighthouse. Any ship benefits — no way to bill them. Markets can't price these efficiently, so government typically provides them (defense, public health, security).</p>
+      <div class="key-box">
+        <span class="label">Free Rider Problem</span>
+        Some benefit without paying their share — undermines voluntary funding of public goods.
+      </div>
+    </div></div>
+  </div>
+
+  <!-- 10 -->
+  <div class="node" data-type="fix">
+    <div class="node-head">
+      <span class="num">10</span>
+      <span class="title">Government Fixes</span>
+      <span class="toggle">+</span>
+    </div>
+    <div class="body"><div class="body-inner">
+      <p>Goal: <em>internalize</em> the external cost or benefit so the market price reflects true social value.</p>
+      <ul class="sub-list">
+        <li><strong>For demerit goods</strong>Taxes, regulation, fines (e.g., catalytic converters → lower supply, higher price, less pollution).</li>
+        <li><strong>For merit goods</strong>Subsidies to consumers or producers → increase demand or supply → more output.</li>
+      </ul>
+    </div></div>
+  </div>
+
+  <!-- 11 -->
+  <div class="node" data-type="fix">
+    <div class="node-head">
+      <span class="num">11</span>
+      <span class="title">The Intervention Debate</span>
+      <span class="toggle">+</span>
+    </div>
+    <div class="body"><div class="body-inner">
+      <p>Should government step in? Economists disagree on extent and means.</p>
+      <ul class="sub-list">
+        <li><strong>Pro-intervention</strong>When MB &gt; MC at the social level, government action can reduce deadweight loss.</li>
+        <li><strong>Coase Theorem &amp; free-market view</strong>Parties can often negotiate solutions themselves (e.g., farmers + beekeepers + consumers). Austrian school, Milton Friedman: intervention adds cost and blocks market self-correction.</li>
+      </ul>
+      <div class="key-box">
+        <span class="label">Bottom line</span>
+        Public expenditure is justified when marginal social benefit exceeds marginal social cost — but measurement is hard.
+      </div>
+    </div></div>
+  </div>
+
+  <footer>End · Lesson 4</footer>
+</div>
+
+<script>
+  const nodes = document.querySelectorAll('.node');
+  nodes.forEach(n => {
+    n.querySelector('.node-head').addEventListener('click', () => {
+      n.classList.toggle('open');
+    });
+  });
+  document.getElementById('expandAll').addEventListener('click', () => {
+    nodes.forEach(n => n.classList.add('open'));
+  });
+  document.getElementById('collapseAll').addEventListener('click', () => {
+    nodes.forEach(n => n.classList.remove('open'));
+  });
+</script>
+</body>
+</html>
